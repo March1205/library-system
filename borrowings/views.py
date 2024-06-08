@@ -1,4 +1,7 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
+
+from borrowings.filters import BorrowingFilter
 from borrowings.serializers import (
     BorrowingSerializer,
     BorrowingCreateSerializer
@@ -15,11 +18,22 @@ class BorrowingViewSet(viewsets.ModelViewSet):
     queryset = Borrowing.objects.all()
     serializer_class = BorrowingSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = BorrowingFilter
 
     def get_serializer_class(self):
         if self.action == 'create':
             return BorrowingCreateSerializer
         return BorrowingSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Borrowing.objects.all()
+
+        if not user.is_staff:
+            queryset = queryset.filter(user=user)
+
+        return queryset
 
     def perform_create(self, serializer):
         book = serializer.validated_data['book']
