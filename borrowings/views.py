@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from borrowings.serializers import (
     BorrowingSerializer,
     BorrowingCreateSerializer
@@ -6,6 +6,9 @@ from borrowings.serializers import (
 from borrowings.models import Borrowing
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.utils import timezone
 
 
 class BorrowingViewSet(viewsets.ModelViewSet):
@@ -34,3 +37,28 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             book.inventory += 1
             book.save()
         serializer.save()
+
+    @action(
+        detail=True,
+        methods=["POST"],
+        permission_classes=[IsAuthenticated]
+    )
+    def return_book(self, request, pk=None):
+        borrowing = self.get_object()
+        if borrowing.actual_return_date:
+            return Response(
+                {"error": "Book already returned"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        borrowing.actual_return_date = timezone.now()
+        borrowing.save()
+
+        book = borrowing.book
+        book.inventory += 1
+        book.save()
+
+        return Response(
+            {"status": "Book returned successfully"},
+            status=status.HTTP_200_OK
+        )
