@@ -58,3 +58,9 @@ The project includes comprehensive tests to ensure the reliability and correctne
     ```sh
     python manage.py runserver
     ```
+## Environment Variables
+
+This project uses environment variables for configuration. Copy the `.env.sample` file to `.env` and update the values as necessary.
+
+```bash
+cp .env.sample .env
